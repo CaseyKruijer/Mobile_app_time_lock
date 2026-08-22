@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,14 +41,37 @@ class MainActivity : ComponentActivity() {
         setContent {
             Column(
                 modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+
+                horizontalAlignment =
+                    Alignment.CenterHorizontally,
+
+                verticalArrangement =
+                    Arrangement.Center
             ) {
+
                 Text("TimeLock")
-                Text("Unlocked")
+
+                Text("22:00 → 07:00")
+
+                Button(
+                    onClick = {
+
+                        val serviceIntent = Intent(
+                            this@MainActivity,
+                            TimeLockService::class.java
+                        )
+
+                        startForegroundService(
+                            serviceIntent
+                        )
+                    }
+                ) {
+                    Text("Start TimeLock")
+                }
             }
         }
 
+        // Start de normale tijdcontrole
         handler.post(timeChecker)
     }
 
@@ -55,10 +79,14 @@ class MainActivity : ComponentActivity() {
 
         val calendar = Calendar.getInstance()
 
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
+        val hour =
+            calendar.get(Calendar.HOUR_OF_DAY)
 
-        val currentMinutes = hour * 60 + minute
+        val minute =
+            calendar.get(Calendar.MINUTE)
+
+        val currentMinutes =
+            hour * 60 + minute
 
         // 22:00
         val lockTime = 22 * 60
@@ -71,6 +99,7 @@ class MainActivity : ComponentActivity() {
                     currentMinutes < unlockTime
 
         if (shouldBeLocked) {
+
             openLockScreen()
         }
     }

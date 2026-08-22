@@ -11,6 +11,14 @@
     <uses-permission
         android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
+    <!-- Foreground service -->
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- Special-use foreground service -->
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -30,30 +38,46 @@
             android:windowSoftInputMode="adjustResize">
 
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+
+                <action
+                    android:name="android.intent.action.MAIN" />
 
                 <category
                     android:name="android.intent.category.LAUNCHER" />
+
             </intent-filter>
 
         </activity>
 
-        <!-- Onze eigen Lock Activity -->
+        <!-- Lock Activity -->
         <activity
             android:name=".LockActivity"
             android:exported="false"
             android:showWhenLocked="true"
             android:turnScreenOn="true" />
 
-        <!-- Receiver voor 22:00 -->
+        <!-- Lock Receiver -->
         <receiver
             android:name=".LockReceiver"
             android:exported="false" />
 
-        <!-- Receiver voor 07:00 -->
+        <!-- Unlock Receiver -->
         <receiver
             android:name=".UnlockReceiver"
             android:exported="false" />
+
+        <!-- TimeLock achtergrondservice -->
+        <service
+            android:name=".TimeLockService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+
+            <!-- Uitleg waarom deze special-use service nodig is -->
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Time-based device lock and screen management" />
+
+        </service>
 
     </application>
 
