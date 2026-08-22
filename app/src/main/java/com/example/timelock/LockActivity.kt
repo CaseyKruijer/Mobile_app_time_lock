@@ -1,6 +1,8 @@
 package com.example.timelock
 
 import android.os.Bundle
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -19,11 +21,7 @@ class LockActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Maak de Activity fullscreen
-        window.decorView.systemUiVisibility =
-            android.view.View.SYSTEM_UI_FLAG_FULLSCREEN or
-                    android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                    android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        hideSystemUI()
 
         setContent {
             LockScreen(
@@ -31,6 +29,22 @@ class LockActivity : ComponentActivity() {
                     finish()
                 }
             )
+        }
+    }
+
+    private fun hideSystemUI() {
+
+        val controller = window.insetsController
+
+        if (controller != null) {
+
+            controller.hide(
+                WindowInsets.Type.statusBars() or
+                        WindowInsets.Type.navigationBars()
+            )
+
+            controller.systemBarsBehavior =
+                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 }
@@ -44,7 +58,9 @@ fun LockScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black),
+
         horizontalAlignment = Alignment.CenterHorizontally,
+
         verticalArrangement = Arrangement.Center
     ) {
 
@@ -54,14 +70,14 @@ fun LockScreen(
         )
 
         Text(
-            text = "Time to put your phone away.",
+            text = "TIME LOCK",
             color = Color.White
         )
 
         Button(
             onClick = onUnlock
         ) {
-            Text("Unlock")
+            Text("Unlock Test")
         }
     }
 }
