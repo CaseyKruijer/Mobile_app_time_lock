@@ -3,6 +3,7 @@ package com.example.timelock
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.Handler
@@ -14,7 +15,10 @@ class TimeLockService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
 
-    private val checkInterval = 60_000L // 1 minuut
+    // Voor testen: iedere minuut controleren
+    private val checkInterval = 60_000L
+
+    private var lockScreenShown = false
 
     private val timeChecker = object : Runnable {
 
@@ -67,7 +71,15 @@ class TimeLockService : Service() {
 
         if (shouldBeLocked) {
 
-            openLockScreen()
+            if (!lockScreenShown) {
+                openLockScreen()
+                lockScreenShown = true
+            }
+
+        } else {
+
+            // Vanaf 07:00 mag de LockActivity zichzelf sluiten.
+            lockScreenShown = false
         }
     }
 
@@ -78,20 +90,65 @@ class TimeLockService : Service() {
             LockActivity::class.java
         )
 
-        intent.addFlags(
+        intent.flags =
             Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            100,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                    PendingIntent.FLAG_IMMUTABLE
         )
 
-        startActivity(intent)
+        val notification = Notification.Builder(
+            this,
+            "timelock_lock"
+        )
+            .setSmallIcon(android.R.drawable.ic_lock_lock)
+            .setContentTitle("TimeLock")
+            .setContentText("TimeLock is actief")
+            .setPriority(Notification.PRIORITY_MAX)
+            .setCategory(Notification.CATEGORY_ALARM)
+            .setFullScreenIntent(
+                pendingIntent,
+                true
+            )
+            .setAutoCancel(true)
+            .build()
+
+        val manager =
+            getSystemService(
+                NotificationManager::class.java
+            )
+
+        manager.notify(
+            LOCK_NOTIFICATION_ID,
+            notification
+        )
     }
 
     private fun createNotificationChannel() {
 
-        val channel = NotificationChannel(
+        /*
+         * Channel voor de foreground service.
+         */
+        val serviceChannel = NotificationChannel(
             "timelock_service",
-            "TimeLock",
+            "TimeLock service",
             NotificationManager.IMPORTANCE_LOW
+        )
+
+        /*
+         * Apart HIGH-importance channel voor
+         * het fullscreen lockscherm.
+         */
+        val lockChannel = NotificationChannel(
+            "timelock_lock",
+            "TimeLock lockscherm",
+            NotificationManager.IMPORTANCE_HIGH
         )
 
         val manager =
@@ -99,7 +156,13 @@ class TimeLockService : Service() {
                 NotificationManager::class.java
             )
 
-        manager.createNotificationChannel(channel)
+        manager.createNotificationChannel(
+            serviceChannel
+        )
+
+        manager.createNotificationChannel(
+            lockChannel
+        )
     }
 
     private fun createNotification(): Notification {
@@ -120,12 +183,21 @@ class TimeLockService : Service() {
 
     override fun onDestroy() {
 
-        handler.removeCallbacks(timeChecker)
+        handler.removeCallbacks(
+            timeChecker
+        )
 
         super.onDestroy()
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
+    override fun onBind(
+        intent: Intent?
+    ): IBinder? {
         return null
+    }
+
+    companion object {
+
+        private const val LOCK_NOTIFICATION_ID = 1001
     }
 }

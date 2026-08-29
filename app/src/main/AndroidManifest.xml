@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Exacte alarms -->
     <uses-permission
         android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
-    <!-- Full-screen intent -->
+    <!-- Nodig voor fullscreen notifications -->
     <uses-permission
         android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
@@ -49,12 +50,25 @@
 
         </activity>
 
-        <!-- Lock Activity -->
+        <!--
+            TimeLock Lock Screen
+
+            showWhenLocked:
+            Activity mag boven het Android lockscreen verschijnen.
+
+            turnScreenOn:
+            Scherm wordt aangezet wanneer TimeLock activeert.
+
+            excludeFromRecents:
+            LockActivity verschijnt niet tussen recente apps.
+        -->
         <activity
             android:name=".LockActivity"
             android:exported="false"
             android:showWhenLocked="true"
-            android:turnScreenOn="true" />
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask" />
 
         <!-- Lock Receiver -->
         <receiver
@@ -72,7 +86,6 @@
             android:exported="false"
             android:foregroundServiceType="specialUse">
 
-            <!-- Uitleg waarom deze special-use service nodig is -->
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Time-based device lock and screen management" />

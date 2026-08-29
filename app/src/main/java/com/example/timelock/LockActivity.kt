@@ -1,8 +1,10 @@
 package com.example.timelock
 
+import android.app.KeyguardManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.WindowManager
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
@@ -19,9 +21,10 @@ import java.util.Calendar
 
 class LockActivity : ComponentActivity() {
 
-    private val handler = Handler(Looper.getMainLooper())
+    private val handler =
+        Handler(Looper.getMainLooper())
 
-    // Controleer iedere minuut
+    // Iedere minuut controleren
     private val checkInterval = 60_000L
 
     private val timeChecker = object : Runnable {
@@ -37,8 +40,41 @@ class LockActivity : ComponentActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
+
+        /*
+         * Zorg dat het scherm aangaat
+         * en boven het lockscreen kan verschijnen.
+         */
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+        )
+
+        /*
+         * Als Android een beveiligd lockscreen heeft,
+         * mag deze Activity het tonen vervangen.
+         */
+        val keyguardManager =
+            getSystemService(
+                KeyguardManager::class.java
+            )
+
+        if (keyguardManager.isKeyguardLocked) {
+
+            if (android.os.Build.VERSION.SDK_INT >=
+                android.os.Build.VERSION_CODES.O
+            ) {
+                keyguardManager.requestDismissKeyguard(
+                    this,
+                    null
+                )
+            }
+        }
 
         hideSystemUI()
 
@@ -49,9 +85,11 @@ class LockActivity : ComponentActivity() {
                     .fillMaxSize()
                     .background(Color.Black),
 
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment =
+                    Alignment.CenterHorizontally,
 
-                verticalArrangement = Arrangement.Center
+                verticalArrangement =
+                    Arrangement.Center
             ) {
 
                 Text(
@@ -66,17 +104,38 @@ class LockActivity : ComponentActivity() {
             }
         }
 
+        // Meteen controleren
         handler.post(timeChecker)
+    }
+
+    override fun onWindowFocusChanged(
+        hasFocus: Boolean
+    ) {
+        super.onWindowFocusChanged(hasFocus)
+
+        /*
+         * Android kan de system bars opnieuw tonen
+         * nadat de Activity focus krijgt.
+         *
+         * Daarom opnieuw fullscreen instellen.
+         */
+        if (hasFocus) {
+            hideSystemUI()
+        }
     }
 
     private fun checkTime() {
 
         val calendar = Calendar.getInstance()
 
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
+        val hour =
+            calendar.get(Calendar.HOUR_OF_DAY)
 
-        val currentMinutes = hour * 60 + minute
+        val minute =
+            calendar.get(Calendar.MINUTE)
+
+        val currentMinutes =
+            hour * 60 + minute
 
         // 22:00
         val lockTime = 22 * 60
@@ -89,13 +148,19 @@ class LockActivity : ComponentActivity() {
                     currentMinutes < unlockTime
 
         if (!shouldBeLocked) {
+
+            /*
+             * Vanaf 07:00 gaat het lockscherm
+             * automatisch weg.
+             */
             finish()
         }
     }
 
     private fun hideSystemUI() {
 
-        val controller = window.insetsController
+        val controller =
+            window.insetsController
 
         if (controller != null) {
 
@@ -104,15 +169,29 @@ class LockActivity : ComponentActivity() {
                         WindowInsets.Type.navigationBars()
             )
 
+            /*
+             * GEEN swipe om de system bars
+             * tijdelijk terug te krijgen.
+             */
             controller.systemBarsBehavior =
                 WindowInsetsController
-                    .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    .BEHAVIOR_DEFAULT
         }
     }
 
+//    override fun OnBackPressedDispatcher() {
+        /*
+         * Back-knop blokkeren tijdens TimeLock.
+         *
+         * We doen hier bewust niets.
+         */
+//    }
+
     override fun onDestroy() {
 
-        handler.removeCallbacks(timeChecker)
+        handler.removeCallbacks(
+            timeChecker
+        )
 
         super.onDestroy()
     }
