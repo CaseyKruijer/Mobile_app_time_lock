@@ -24,21 +24,22 @@ class LockActivity : ComponentActivity() {
     private val handler =
         Handler(Looper.getMainLooper())
 
-    // Iedere minuut controleren
-    private val checkInterval = 60_000L
+    private val checkInterval =
+        60_000L
 
-    private val timeChecker = object : Runnable {
+    private val timeChecker =
+        object : Runnable {
 
-        override fun run() {
+            override fun run() {
 
-            checkTime()
+                checkTime()
 
-            handler.postDelayed(
-                this,
-                checkInterval
-            )
+                handler.postDelayed(
+                    this,
+                    checkInterval
+                )
+            }
         }
-    }
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -46,8 +47,8 @@ class LockActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         /*
-         * Zorg dat het scherm aangaat
-         * en boven het lockscreen kan verschijnen.
+         * Scherm aanzetten en boven
+         * lockscreen laten verschijnen.
          */
         window.addFlags(
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
@@ -55,10 +56,6 @@ class LockActivity : ComponentActivity() {
                     WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
 
-        /*
-         * Als Android een beveiligd lockscreen heeft,
-         * mag deze Activity het tonen vervangen.
-         */
         val keyguardManager =
             getSystemService(
                 KeyguardManager::class.java
@@ -69,6 +66,7 @@ class LockActivity : ComponentActivity() {
             if (android.os.Build.VERSION.SDK_INT >=
                 android.os.Build.VERSION_CODES.O
             ) {
+
                 keyguardManager.requestDismissKeyguard(
                     this,
                     null
@@ -104,29 +102,44 @@ class LockActivity : ComponentActivity() {
             }
         }
 
-        // Meteen controleren
+        /*
+         * Zodra LockActivity zichtbaar is,
+         * wordt de telefoon kiosk-mode.
+         */
+        startKioskMode()
+
         handler.post(timeChecker)
     }
 
-    override fun onWindowFocusChanged(
-        hasFocus: Boolean
-    ) {
-        super.onWindowFocusChanged(hasFocus)
+    private fun startKioskMode() {
 
         /*
-         * Android kan de system bars opnieuw tonen
-         * nadat de Activity focus krijgt.
-         *
-         * Daarom opnieuw fullscreen instellen.
+         * Alleen uitvoeren wanneer TimeLock
+         * daadwerkelijk Device Owner /
+         * Lock Task toegestaan is.
          */
-        if (hasFocus) {
-            hideSystemUI()
+        if (!isLockTaskPermitted()) {
+            return
         }
+
+        startLockTask()
+    }
+
+    private fun isLockTaskPermitted(): Boolean {
+
+        val devicePolicyManager =
+            getSystemService(
+                android.app.admin.DevicePolicyManager::class.java
+            )
+
+        return devicePolicyManager
+            .isLockTaskPermitted(packageName)
     }
 
     private fun checkTime() {
 
-        val calendar = Calendar.getInstance()
+        val calendar =
+            Calendar.getInstance()
 
         val hour =
             calendar.get(Calendar.HOUR_OF_DAY)
@@ -137,11 +150,11 @@ class LockActivity : ComponentActivity() {
         val currentMinutes =
             hour * 60 + minute
 
-        // 22:00
-        val lockTime = 22 * 60
+        val lockTime =
+            22 * 60
 
-        // 07:00
-        val unlockTime = 7 * 60
+        val unlockTime =
+            7 * 60
 
         val shouldBeLocked =
             currentMinutes >= lockTime ||
@@ -150,9 +163,13 @@ class LockActivity : ComponentActivity() {
         if (!shouldBeLocked) {
 
             /*
-             * Vanaf 07:00 gaat het lockscherm
-             * automatisch weg.
+             * 07:00 bereikt.
+             *
+             * Eerst kiosk verlaten,
+             * daarna Activity sluiten.
              */
+            stopLockTask()
+
             finish()
         }
     }
@@ -169,23 +186,28 @@ class LockActivity : ComponentActivity() {
                         WindowInsets.Type.navigationBars()
             )
 
-            /*
-             * GEEN swipe om de system bars
-             * tijdelijk terug te krijgen.
-             */
             controller.systemBarsBehavior =
                 WindowInsetsController
                     .BEHAVIOR_DEFAULT
         }
     }
 
-//    override fun OnBackPressedDispatcher() {
+    override fun onWindowFocusChanged(
+        hasFocus: Boolean
+    ) {
+
+        super.onWindowFocusChanged(hasFocus)
+
+        if (hasFocus) {
+            hideSystemUI()
+        }
+    }
+
+    override fun onBackPressed() {
         /*
-         * Back-knop blokkeren tijdens TimeLock.
-         *
-         * We doen hier bewust niets.
+         * Back blokkeren.
          */
-//    }
+    }
 
     override fun onDestroy() {
 
