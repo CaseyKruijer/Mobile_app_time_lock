@@ -160,10 +160,6 @@ class LockActivity : ComponentActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        // Prevent Back from leaving the lock screen.
-    }
-
     override fun onDestroy() {
 
         handler.removeCallbacks(
