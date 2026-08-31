@@ -24,35 +24,35 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TimeLock">
 
-        <!-- MainActivity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.TimeLock">
+            android:theme="@style/Theme.TimeLock"
+            android:windowSoftInputMode="adjustResize">
 
             <intent-filter>
-
-                <action
-                    android:name="android.intent.action.MAIN" />
-
-                <category
-                    android:name="android.intent.category.LAUNCHER" />
-
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
         </activity>
 
-        <!-- LockActivity -->
         <activity
             android:name=".LockActivity"
             android:exported="false"
             android:showWhenLocked="true"
-            android:turnScreenOn="true"
-            android:excludeFromRecents="true"
-            android:launchMode="singleTask" />
+            android:turnScreenOn="true" />
 
-        <!-- Device Owner / Device Admin -->
+        <receiver
+            android:name=".LockReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".UnlockReceiver"
+            android:exported="false" />
+
+        <!-- THIS IS THE NEW PART -->
         <receiver
             android:name=".TimeLockDeviceAdminReceiver"
             android:permission="android.permission.BIND_DEVICE_ADMIN"
@@ -63,25 +63,12 @@
                 android:resource="@xml/device_admin_receiver" />
 
             <intent-filter>
-
                 <action
                     android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
-
             </intent-filter>
 
         </receiver>
 
-        <!-- Existing receiver -->
-        <receiver
-            android:name=".LockReceiver"
-            android:exported="false" />
-
-        <!-- Existing receiver -->
-        <receiver
-            android:name=".UnlockReceiver"
-            android:exported="false" />
-
-        <!-- TimeLock service -->
         <service
             android:name=".TimeLockService"
             android:exported="false"

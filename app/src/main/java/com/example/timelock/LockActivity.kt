@@ -1,12 +1,11 @@
 package com.example.timelock
 
-import android.app.KeyguardManager
+import android.app.admin.DevicePolicyManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.WindowManager
 import android.view.WindowInsets
-import android.view.WindowInsetsController
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -46,33 +45,11 @@ class LockActivity : ComponentActivity() {
     ) {
         super.onCreate(savedInstanceState)
 
-        /*
-         * Scherm aanzetten en boven
-         * lockscreen laten verschijnen.
-         */
         window.addFlags(
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                     WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
                     WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         )
-
-        val keyguardManager =
-            getSystemService(
-                KeyguardManager::class.java
-            )
-
-        if (keyguardManager.isKeyguardLocked) {
-
-            if (android.os.Build.VERSION.SDK_INT >=
-                android.os.Build.VERSION_CODES.O
-            ) {
-
-                keyguardManager.requestDismissKeyguard(
-                    this,
-                    null
-                )
-            }
-        }
 
         hideSystemUI()
 
@@ -102,10 +79,6 @@ class LockActivity : ComponentActivity() {
             }
         }
 
-        /*
-         * Zodra LockActivity zichtbaar is,
-         * wordt de telefoon kiosk-mode.
-         */
         startKioskMode()
 
         handler.post(timeChecker)
@@ -113,27 +86,19 @@ class LockActivity : ComponentActivity() {
 
     private fun startKioskMode() {
 
-        /*
-         * Alleen uitvoeren wanneer TimeLock
-         * daadwerkelijk Device Owner /
-         * Lock Task toegestaan is.
-         */
-        if (!isLockTaskPermitted()) {
-            return
-        }
-
-        startLockTask()
-    }
-
-    private fun isLockTaskPermitted(): Boolean {
-
         val devicePolicyManager =
             getSystemService(
-                android.app.admin.DevicePolicyManager::class.java
+                DevicePolicyManager::class.java
             )
 
-        return devicePolicyManager
-            .isLockTaskPermitted(packageName)
+        if (
+            devicePolicyManager.isLockTaskPermitted(
+                packageName
+            )
+        ) {
+
+            startLockTask()
+        }
     }
 
     private fun checkTime() {
@@ -150,9 +115,11 @@ class LockActivity : ComponentActivity() {
         val currentMinutes =
             hour * 60 + minute
 
+        // Lock starts at 22:00
         val lockTime =
             22 * 60
 
+        // Unlock starts at 07:00
         val unlockTime =
             7 * 60
 
@@ -162,12 +129,6 @@ class LockActivity : ComponentActivity() {
 
         if (!shouldBeLocked) {
 
-            /*
-             * 07:00 bereikt.
-             *
-             * Eerst kiosk verlaten,
-             * daarna Activity sluiten.
-             */
             stopLockTask()
 
             finish()
@@ -185,10 +146,6 @@ class LockActivity : ComponentActivity() {
                 WindowInsets.Type.statusBars() or
                         WindowInsets.Type.navigationBars()
             )
-
-            controller.systemBarsBehavior =
-                WindowInsetsController
-                    .BEHAVIOR_DEFAULT
         }
     }
 
@@ -204,9 +161,7 @@ class LockActivity : ComponentActivity() {
     }
 
     override fun onBackPressed() {
-        /*
-         * Back blokkeren.
-         */
+        // Prevent Back from leaving the lock screen.
     }
 
     override fun onDestroy() {
