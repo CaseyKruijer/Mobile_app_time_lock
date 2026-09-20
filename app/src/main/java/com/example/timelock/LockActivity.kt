@@ -136,13 +136,10 @@ class LockActivity : ComponentActivity() {
     }
 
     private fun hideSystemUI() {
+        window.decorView.post {
+            val controller = window.decorView.windowInsetsController
 
-        val controller =
-            window.insetsController
-
-        if (controller != null) {
-
-            controller.hide(
+            controller?.hide(
                 WindowInsets.Type.statusBars() or
                         WindowInsets.Type.navigationBars()
             )
